@@ -108,190 +108,6 @@ func Test_splitSliceStrings(t *testing.T) {
 		})
 	}
 }
-
-func TestBinarySpacePartioner_initialRange(t *testing.T) {
-	type fields struct {
-		Power int
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		want   int
-	}{
-		{
-			"1",
-			fields{1},
-			2,
-		},
-		{
-			"10",
-			fields{10},
-			1024,
-		},
-		{
-			"0",
-			fields{0},
-			1,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			partitioner := BinarySpacePartitioner{
-				Power: tt.fields.Power,
-			}
-			if got := partitioner.initialRange(); got != tt.want {
-				t.Errorf("BinarySpacePartitioner.initialRange() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestBinarySpacePartioner_indexFromTree(t *testing.T) {
-	type fields struct {
-		Power int
-	}
-	type args struct {
-		tree string
-		key  BinaryKey
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		args   args
-		want   int
-	}{
-		{
-			"0",
-			fields{7},
-			args{
-				"FBFBBFF",
-				BinaryKey{
-					lower: "F",
-					upper: "B",
-				},
-			},
-			44,
-		},
-		{
-			"0",
-			fields{7},
-			args{
-				"FBFBBFB",
-				BinaryKey{
-					lower: "F",
-					upper: "B",
-				},
-			},
-			45,
-		},
-		{
-			"0",
-			fields{7},
-			args{
-				"FFFFFFF",
-				BinaryKey{
-					lower: "F",
-					upper: "B",
-				},
-			},
-			0,
-		},
-		{
-			"0",
-			fields{7},
-			args{
-				"BBBBBBB",
-				BinaryKey{
-					lower: "F",
-					upper: "B",
-				},
-			},
-			127,
-		},
-		{
-			"0",
-			fields{1},
-			args{
-				"F",
-				BinaryKey{
-					lower: "F",
-					upper: "B",
-				},
-			},
-			0,
-		},
-		{
-			"0",
-			fields{1},
-			args{
-				"B",
-				BinaryKey{
-					lower: "F",
-					upper: "B",
-				},
-			},
-			1,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			partitioner := BinarySpacePartitioner{
-				Power: tt.fields.Power,
-			}
-			if got := partitioner.indexFromTree(tt.args.tree, tt.args.key); got != tt.want {
-				t.Errorf("BinarySpacePartitioner.indexFromTree() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestBinarySpacePartitioner_getPartitionIndexesFrom(t *testing.T) {
-	type fields struct {
-		Power int
-	}
-	type args struct {
-		input []string
-		key   BinaryKey
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		args   args
-		want   []int
-	}{
-		{
-			"0",
-			fields{7},
-			args{
-				[]string{
-					"FBFBBFF",
-					"BBBBBBB",
-					"FFFFFFF",
-				},
-				BinaryKey{
-					lower: "F",
-					upper: "B",
-				},
-			},
-			[]int{
-				44,
-				127,
-				0,
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			partitioner := BinarySpacePartitioner{
-				Power: tt.fields.Power,
-			}
-			if got := partitioner.getPartitionIndexesFrom(tt.args.input, tt.args.key); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("BinarySpacePartitioner.getPartitionIndexesFrom() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
 func Test_getSeatIDsFrom(t *testing.T) {
 	type args struct {
 		rows []int
@@ -330,6 +146,139 @@ func Test_getSeatIDsFrom(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := getSeatIDsFrom(tt.args.rows, tt.args.cols); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("getSeatIDsFrom() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestCharSequenceToBinarySequence(t *testing.T) {
+	type args struct {
+		input string
+		key   BinaryKey
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			name: "0",
+			args: args{
+				"FBFBBFF",
+				BinaryKey{
+					lower: "F",
+					upper: "B",
+				},
+			},
+			want: "0101100",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := CharSequenceToBinarySequence(tt.args.input, tt.args.key); got != tt.want {
+				t.Errorf("CharSequenceToBinarySequence() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestBinaryStringSliceToInts(t *testing.T) {
+	type args struct {
+		input []string
+	}
+	tests := []struct {
+		name string
+		args args
+		want []int
+	}{
+		{
+			name: "0",
+			args: args{
+				[]string{
+					"0101100",
+					"0000000",
+				},
+			},
+			want: []int{
+				44,
+				0,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := BinaryStringSliceToInts(tt.args.input); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("BinaryStringSliceToInts() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestMapToBinarySequenceSlice(t *testing.T) {
+	type args struct {
+		input []string
+		key   BinaryKey
+	}
+	tests := []struct {
+		name string
+		args args
+		want []string
+	}{
+		{
+			name: "0",
+			args: args{
+				[]string{
+					"FBFBBFF",
+				},
+				BinaryKey{
+					lower: "F",
+					upper: "B",
+				},
+			},
+			want: []string{
+				"0101100",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := MapToBinarySequenceSlice(tt.args.input, tt.args.key); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("MapToBinarySequenceSlice() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestMapSequencesToDecimals(t *testing.T) {
+	type args struct {
+		input []string
+		key   BinaryKey
+	}
+	tests := []struct {
+		name string
+		args args
+		want []int
+	}{
+		{
+			name: "0",
+			args: args{
+				[]string{
+					"FBFBBFF",
+				},
+				BinaryKey{
+					lower: "F",
+					upper: "B",
+				},
+			},
+			want: []int{
+				44,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := MapSequencesToDecimals(tt.args.input, tt.args.key); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("MapSequencesToDecimals() = %v, want %v", got, tt.want)
 			}
 		})
 	}

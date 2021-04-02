@@ -4,45 +4,13 @@ import (
 	"bufio"
 	"fmt"
 	"log"
-	"math"
 	"os"
 	"sort"
+	"strconv"
 	"strings"
 )
 
 const inputFile = "../input.txt"
-
-type BinarySpacePartitioner struct {
-	Power int
-}
-
-func (partitioner BinarySpacePartitioner) initialRange() int {
-	floatPower := float64(partitioner.Power)
-
-	return int(math.Pow(2.0, floatPower))
-}
-
-func (partitioner BinarySpacePartitioner) indexFromTree(treeString string, key BinaryKey) int {
-
-	tree := strings.Split(treeString, "")
-
-	if len(tree) != partitioner.Power {
-		log.Fatal("The tree string parsed into too many characters")
-	}
-
-	currentRange := partitioner.initialRange()
-	currentMin := 0
-
-	for i := 0; i < partitioner.Power; i++ {
-		currentRange /= 2
-
-		if tree[i] == key.upper {
-			currentMin += currentRange
-		}
-	}
-
-	return currentMin
-}
 
 type BinaryKey struct {
 	lower string
@@ -91,16 +59,6 @@ func splitSliceStrings(input []string, pivot int) ([]string, []string) {
 	return leftSubstrings, rightSubstrings
 }
 
-func (partitioner BinarySpacePartitioner) getPartitionIndexesFrom(input []string, key BinaryKey) []int {
-	indexSlice := make([]int, 0, len(input))
-
-	for _, tree := range input {
-		index := partitioner.indexFromTree(tree, key)
-		indexSlice = append(indexSlice, index)
-	}
-	return indexSlice
-}
-
 func seatID(row, column int) int {
 	return (row * 8) + column
 }
@@ -116,28 +74,73 @@ func getSeatIDsFrom(rows, cols []int) []int {
 	return seatIDs
 }
 
+func CharSequenceToBinarySequence(input string, key BinaryKey) string {
+	var output string
+
+	temp := strings.Replace(input, key.upper, "1", -1)
+	temp = strings.Replace(temp, key.lower, "0", -1)
+
+	output = temp
+
+	return output
+}
+
+func MapToBinarySequenceSlice(input []string, key BinaryKey) []string {
+	output := make([]string, 0, len(input))
+
+	for _, value := range input {
+		output = append(output, CharSequenceToBinarySequence(value, key))
+	}
+
+	return output
+}
+
+func BinaryStringSliceToInts(input []string) []int {
+	inputSize := len(input)
+	intSlice := make([]int, 0, inputSize)
+
+	for _, value := range input {
+		parsedInt, err := strconv.ParseInt(value, 2, 64)
+		if err != nil {
+			log.Fatal()
+		}
+		intSlice = append(intSlice, int(parsedInt))
+	}
+
+	return intSlice
+}
+
+func MapSequencesToDecimals(input []string, key BinaryKey) []int {
+
+	binarySequences := MapToBinarySequenceSlice(input, key)
+
+	decimalSlice := BinaryStringSliceToInts(binarySequences)
+
+	return decimalSlice
+}
+
 func main() {
-	// Parse input into slice of rows
 	rows := readFileToStringSlice(inputFile)
 
-	// Parse each row into slice of substrings
-	rowTrees, colTrees := splitSliceStrings(rows, 7)
+	rowSequences, colSequences := splitSliceStrings(rows, 7)
 
-	rowPartitioner := BinarySpacePartitioner{7}
-	colPartitioner := BinarySpacePartitioner{3}
+	rowMapping := BinaryKey{lower: "F", upper: "B"}
+	colMapping := BinaryKey{lower: "L", upper: "R"}
 
-	// Iterate over slices, producing a slice of row numbers and columns
-	rowNums := rowPartitioner.getPartitionIndexesFrom(rowTrees, BinaryKey{lower: "F", upper: "B"})
-	colNums := colPartitioner.getPartitionIndexesFrom(colTrees, BinaryKey{lower: "L", upper: "R"})
-	seatIDs := getSeatIDsFrom(rowNums, colNums)
+	rowIDs := MapSequencesToDecimals(rowSequences, rowMapping)
+	colIDs := MapSequencesToDecimals(colSequences, colMapping)
+
+	seatIDs := getSeatIDsFrom(rowIDs, colIDs)
+
 	sort.Ints(seatIDs)
-	// fmt.Println(seatIDs)
+
+	fmt.Printf("Seat IDs: Min, Max = %v, %v\n", seatIDs[0], seatIDs[len(seatIDs)-1])
+
 	for index, value := range seatIDs {
-		if index != 0 {
+		if index > 0 {
 			if value-seatIDs[index-1] != 1 {
-				fmt.Println(seatIDs[index-1], seatIDs[index])
+				fmt.Printf("Missing Seat ID between %v and %v\n", seatIDs[index-1], seatIDs[index])
 			}
 		}
 	}
-	// From column and row numbers, produce a slice of seatIDs
 }
