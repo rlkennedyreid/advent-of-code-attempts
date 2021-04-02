@@ -23,6 +23,21 @@ type BinaryKey struct {
 	upper string
 }
 
+func main() {
+	inputLines := readFileToStringSlice(INPUT_FILE)
+
+	rowSequences, colSequences := splitSliceStrings(inputLines, SUBSTR_PIVOT)
+
+	rowIDs := MapSequencesToDecimals(rowSequences, ROW_MAPPING)
+	colIDs := MapSequencesToDecimals(colSequences, COL_MAPPING)
+
+	seatIDs := getSeatIDsFrom(rowIDs, colIDs)
+
+	sort.Ints(seatIDs)
+
+	getAnswersAndPrintOutputMessage(seatIDs)
+}
+
 func readFileToStringSlice(fileDirectory string) []string {
 
 	file, err := os.Open(fileDirectory)
@@ -44,14 +59,6 @@ func readFileToStringSlice(fileDirectory string) []string {
 	return lines
 }
 
-func substringsAt(fullString string, pivot int) (string, string) {
-	if pivot > len(fullString) || pivot < 0 {
-		log.Fatal("Pivot point for substrings is out of bounds")
-	}
-
-	return fullString[:pivot], fullString[pivot:]
-}
-
 func splitSliceStrings(input []string, pivot int) ([]string, []string) {
 	inputSize := len(input)
 	leftSubstrings := make([]string, 0, inputSize)
@@ -66,19 +73,31 @@ func splitSliceStrings(input []string, pivot int) ([]string, []string) {
 	return leftSubstrings, rightSubstrings
 }
 
-func seatID(row, column int) int {
-	return (row * 8) + column
-}
-
-func getSeatIDsFrom(rows, cols []int) []int {
-	size := len(rows)
-	seatIDs := make([]int, 0, size)
-
-	for i := 0; i < size; i++ {
-		seatIDs = append(seatIDs, seatID(rows[i], cols[i]))
+func substringsAt(fullString string, pivot int) (string, string) {
+	if pivot > len(fullString) || pivot < 0 {
+		log.Fatal("Pivot point for substrings is out of bounds")
 	}
 
-	return seatIDs
+	return fullString[:pivot], fullString[pivot:]
+}
+
+func MapSequencesToDecimals(input []string, key BinaryKey) []int {
+
+	binarySequences := MapToBinarySequenceSlice(input, key)
+
+	decimalSlice := BinaryStringSliceToInts(binarySequences)
+
+	return decimalSlice
+}
+
+func MapToBinarySequenceSlice(input []string, key BinaryKey) []string {
+	output := make([]string, 0, len(input))
+
+	for _, value := range input {
+		output = append(output, CharSequenceToBinarySequence(value, key))
+	}
+
+	return output
 }
 
 func CharSequenceToBinarySequence(input string, key BinaryKey) string {
@@ -88,16 +107,6 @@ func CharSequenceToBinarySequence(input string, key BinaryKey) string {
 	temp = strings.Replace(temp, key.lower, "0", -1)
 
 	output = temp
-
-	return output
-}
-
-func MapToBinarySequenceSlice(input []string, key BinaryKey) []string {
-	output := make([]string, 0, len(input))
-
-	for _, value := range input {
-		output = append(output, CharSequenceToBinarySequence(value, key))
-	}
 
 	return output
 }
@@ -117,13 +126,19 @@ func BinaryStringSliceToInts(input []string) []int {
 	return intSlice
 }
 
-func MapSequencesToDecimals(input []string, key BinaryKey) []int {
+func getSeatIDsFrom(rows, cols []int) []int {
+	size := len(rows)
+	seatIDs := make([]int, 0, size)
 
-	binarySequences := MapToBinarySequenceSlice(input, key)
+	for i := 0; i < size; i++ {
+		seatIDs = append(seatIDs, seatID(rows[i], cols[i]))
+	}
 
-	decimalSlice := BinaryStringSliceToInts(binarySequences)
+	return seatIDs
+}
 
-	return decimalSlice
+func seatID(row, column int) int {
+	return (row * 8) + column
 }
 
 func getAnswersAndPrintOutputMessage(seatIDs []int) {
@@ -137,19 +152,4 @@ func getAnswersAndPrintOutputMessage(seatIDs []int) {
 			}
 		}
 	}
-}
-
-func main() {
-	inputLines := readFileToStringSlice(INPUT_FILE)
-
-	rowSequences, colSequences := splitSliceStrings(inputLines, SUBSTR_PIVOT)
-
-	rowIDs := MapSequencesToDecimals(rowSequences, ROW_MAPPING)
-	colIDs := MapSequencesToDecimals(colSequences, COL_MAPPING)
-
-	seatIDs := getSeatIDsFrom(rowIDs, colIDs)
-
-	sort.Ints(seatIDs)
-
-	getAnswersAndPrintOutputMessage(seatIDs)
 }
