@@ -10,7 +10,13 @@ import (
 	"strings"
 )
 
-const inputFile = "../input.txt"
+const INPUT_FILE = "../input.txt"
+const SUBSTR_PIVOT = 7
+
+var (
+	ROW_MAPPING = BinaryKey{lower: "F", upper: "B"}
+	COL_MAPPING = BinaryKey{lower: "L", upper: "R"}
+)
 
 type BinaryKey struct {
 	lower string
@@ -20,11 +26,12 @@ type BinaryKey struct {
 func readFileToStringSlice(fileDirectory string) []string {
 
 	file, err := os.Open(fileDirectory)
-	defer file.Close()
 
 	if err != nil {
 		log.Fatal("Could not open input file")
 	}
+
+	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
 
@@ -119,20 +126,7 @@ func MapSequencesToDecimals(input []string, key BinaryKey) []int {
 	return decimalSlice
 }
 
-func main() {
-	rows := readFileToStringSlice(inputFile)
-
-	rowSequences, colSequences := splitSliceStrings(rows, 7)
-
-	rowMapping := BinaryKey{lower: "F", upper: "B"}
-	colMapping := BinaryKey{lower: "L", upper: "R"}
-
-	rowIDs := MapSequencesToDecimals(rowSequences, rowMapping)
-	colIDs := MapSequencesToDecimals(colSequences, colMapping)
-
-	seatIDs := getSeatIDsFrom(rowIDs, colIDs)
-
-	sort.Ints(seatIDs)
+func getAnswersAndPrintOutputMessage(seatIDs []int) {
 
 	fmt.Printf("Seat IDs: Min, Max = %v, %v\n", seatIDs[0], seatIDs[len(seatIDs)-1])
 
@@ -143,4 +137,19 @@ func main() {
 			}
 		}
 	}
+}
+
+func main() {
+	inputLines := readFileToStringSlice(INPUT_FILE)
+
+	rowSequences, colSequences := splitSliceStrings(inputLines, SUBSTR_PIVOT)
+
+	rowIDs := MapSequencesToDecimals(rowSequences, ROW_MAPPING)
+	colIDs := MapSequencesToDecimals(colSequences, COL_MAPPING)
+
+	seatIDs := getSeatIDsFrom(rowIDs, colIDs)
+
+	sort.Ints(seatIDs)
+
+	getAnswersAndPrintOutputMessage(seatIDs)
 }
